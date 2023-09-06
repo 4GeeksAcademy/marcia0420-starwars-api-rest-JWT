@@ -10,6 +10,16 @@ from utils import APIException, generate_sitemap
 from admin import setup_admin
 from models import db, User,Planets,Personajes,Vehiculos,Naves,Favoritos
 import json
+# from flask_jwt_extended import create_access_token # esta funcion crea el token 
+# from flask_jwt_extended import get_jwt_identity # esta funcion obtiene la identidad que otorgo  
+# from flask_jwt_extended import jwt_required # esta le pide al usuario el token
+# from flask_jwt_extended import JWTManager # esta se encarga de hacer una configuracion 
+# aca se puede hacer asi tambien
+from flask_jwt_extended import create_access_token,get_jwt_identity,jwt_required,JWTManager
+# from flask_jwt_extended import get_jwt_identity
+# from flask_jwt_extended import jwt_required
+# from flask_jwt_extended import JWTManager
+
 
 #from models import Person
 
@@ -32,8 +42,40 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 MIGRATE = Migrate(app, db)
 db.init_app(app)
 CORS(app)
+# aca en estas dos lineas de codigo estamos configurando jwt dentro de nuestra aplicacion
+# Setup the Flask-JWT-Extended extension
+app.config["JWT_SECRET_KEY"] = "aca se puede poner lo que yo quiera"  # Change this! despues hay que ocultarlo!
+jwt = JWTManager(app)
 
 setup_admin(app)
+
+
+
+#enpoint para hacer el login
+# Create a route to authenticate your users and return JWTs. The
+# create_access_token() function is used to actually generate the JWT.
+@app.route("/login", methods=["POST"])
+def login():
+    email = request.json.get("email", None) # obtine user
+    password = request.json.get("password", None) # obtiene password
+
+    User_query =User.query.filter_by(email=email).first()   #filtrar en la tabla user una consulta que filtre por el emil, porque quiero que me busque filtrar el valoe que envian.
+    print(User.query)       
+    if User_query is None:
+        return jsonify({"msg": "email dosn't exist"}), 404
+
+    if  email != "test" or password != "test":
+        return jsonify({"msg": "Bad username or password"}), 401
+
+    access_token = create_access_token(identity=email)
+
+    return jsonify(access_token=access_token)
+
+
+
+
+
+
 
 # Handle/serialize errors like a JSON object
 @app.errorhandler(APIException)
